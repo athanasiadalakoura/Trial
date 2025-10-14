@@ -1,0 +1,34 @@
+name: Daily Scrape
+
+on:
+  schedule:
+    # 6 AM Greece = 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run scraping script
+        run: python scraping.py
+
+      - name: Commit and push results
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add products.json products.csv || true
+          git commit -m "Daily scrape $(date '+%Y-%m-%d %H:%M')" || echo "No changes to commit"
+          git push
